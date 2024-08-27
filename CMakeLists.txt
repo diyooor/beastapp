@@ -19,7 +19,7 @@ set(SOURCES
     ${HTTP_SRC}/http_session.cpp
     ${HTTP_SRC}/listener.cpp
     ${WS_SRC}/websocket_session.cpp
-    main.cpp
+    ${SRC_DIR}/main.cpp
 )
 
 # Add executable
