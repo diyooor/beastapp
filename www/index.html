@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title></title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #1e1e1e;
+      color: #ccc;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #chat-container-wrapper {
+      width: 300px;
+      height: 400px;
+      background-color: #2e2e2e;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+    }
+
+    #chat-header {
+      background-color: #444;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+      position: relative;
+    }
+
+    #chat-container {
+      flex-grow: 1;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    pre {
+      flex-grow: 1;
+      background-color: #1e1e1e;
+      padding: 10px;
+      border-radius: 4px;
+      border: solid 1px #444;
+      overflow-y: auto;
+      color: #ccc;
+      white-space: pre-wrap; /* Ensures text wraps */
+      word-wrap: break-word; /* Ensures long words break */
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+
+    input {
+      background-color: #333;
+      color: #ccc;
+    }
+
+    button {
+      background-color: #555;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #666;
+    }
+
+    #settings-icon {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: 0.7;
+      z-index: 1000;
+    }
+
+    #settings-icon img {
+      width: 32px;
+      height: 32px;
+    }
+
+    #settings-menu {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #2e2e2e;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 1001;
+    }
+
+    #settings-menu label {
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #settings-menu input[type="checkbox"] {
+      margin-right: 10px;
+      cursor: pointer;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div id="chat-container-wrapper">
+    <div id="chat-header">
+      <h2>Chat</h2>
+    </div>
+    <div id="chat-container">
+      <pre id="messages"></pre>
+      <input id="sendMessage" placeholder="Type your message...">
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+  <button id="settings-icon">
+    <img src="https://img.icons8.com/ios-glyphs/30/ffffff/settings.png" alt="Settings">
+  </button>
+
+  <div id="settings-menu">
+    <label>
+      <input type="checkbox" id="toggle-chat">
+      Show Chat
+    </label>
+  </div>
+
+  <script>
+    const serverUri = "wss://sattar.xyz";
+    let ws = null;
+    const userId = generateUserId();
+
+    function generateUserId() {
+      return Math.random().toString(36).substr(2, 8);
+    }
+
+    function showMessage(msg) {
+      const messages = document.getElementById('messages');
+      messages.innerText += msg + "\n";
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function connectWebSocket() {
+      ws = new WebSocket(serverUri);
+
+      ws.onopen = function() {
+        showMessage("[connection opened as " + userId + "]");
+      };
+
+      ws.onclose = function() {
+        showMessage("[connection closed, attempting to reconnect...]");
+        setTimeout(connectWebSocket, 1000); // Reconnect after 1 second
+      };
+
+      ws.onmessage = function(ev) {
+        showMessage(ev.data);
+      };
+
+      ws.onerror = function() {
+        showMessage("[error]");
+      };
+    }
+
+    document.getElementById('send').onclick = function() {
+      const sendMessage = document.getElementById('sendMessage');
+      if (ws) {
+        ws.send(userId + ": " + sendMessage.value);
+        sendMessage.value = "";
+      }
+    };
+
+    document.getElementById('sendMessage').onkeyup = function(ev) {
+      if (ev.key === 'Enter') {
+        document.getElementById('send').click();
+      }
+    };
+
+    // Automatically connect when the page loads
+    window.onload = connectWebSocket;
+
+    // Settings icon click event
+    document.getElementById('settings-icon').onclick = function() {
+      const settingsMenu = document.getElementById('settings-menu');
+      settingsMenu.style.display = settingsMenu.style.display === 'none' ? 'block' : 'none';
+    };
+
+    // Toggle chat visibility
+    document.getElementById('toggle-chat').onclick = function() {
+      const chatWrapper = document.getElementById('chat-container-wrapper');
+      chatWrapper.style.display = this.checked ? 'flex' : 'none';
+    };
+
+  </script>
+
+</body>
+</html>
+
